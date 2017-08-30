@@ -65,18 +65,31 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
   return result;
 }
 
+void toCarSpace(vector<double> ptsx, std::vector<double> ptsy, double psi, double xt, double yt, vector<double> &t_ptsx, vector<double> &t_ptsy) {
+  t_ptsx.resize(ptsx.size());
+  t_ptsy.resize(ptsy.size());
+  for (int i = 0; i < ptsx.size(); i++) {
+    double x = ptsx[i] - xt;
+    double y = ptsy[i] - yt;
+    t_ptsx[i] = cos(psi)*x + sin(psi)*y;
+    t_ptsy[i] = -sin(psi)*x + cos(psi)*y;
+  }
+}
+
 int main() {
   uWS::Hub h;
 
   // MPC is initialized here!
-  MPC mpc;
+  MPC mpc = MPC(0.1);
+  int t = 0;
 
-  h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&mpc, &t](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
+    std::cout << "------------------------------------------------------------------" << std::endl;
     cout << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
@@ -85,21 +98,69 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
+          std::cout << " t = " << t << std::endl;
+          t++;
+
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
+          
+          std::cout << ptsx.size() << ", " << ptsy.size() << std::endl;
+
+          for (int i = 0; i < ptsx.size(); i++) {
+            std::cout << "(" << ptsx[i] << ", " << ptsy[i] << ") " << std::endl;
+          }
+
+
           double px = j[1]["x"];
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
 
+          vector<double> t_ptsx, t_ptsy;
+          toCarSpace(ptsx, ptsy, psi, px, py, t_ptsx, t_ptsy);
+
+          Eigen::VectorXd ptsx_car(6);
+          Eigen::VectorXd ptsy_car(6);
+          for (int i = 0; i < t_ptsx.size(); i++) {
+            ptsx_car[i] = t_ptsx[i];
+            ptsy_car[i] = t_ptsy[i];
+          }
+          std::cout << "Transformed: " << std::endl;
+          for (int i = 0; i < t_ptsx.size(); i++) {
+            std::cout << "(" << t_ptsx[i] << ", " << t_ptsy[i] << ") " << std::endl;
+          }
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
           *
           */
-          double steer_value;
-          double throttle_value;
+          auto coeffs = polyfit(ptsx_car, ptsy_car, 3);
+          std::cout << "coeffs: " << coeffs << std::endl;
+
+          Eigen::VectorXd state(6);
+          double cte = polyeval(coeffs, 0);
+          std::cout << "cte = " << cte << std::endl;
+
+          double epsi = atan(coeffs[1]); 
+          //if (epsi > M_PI/2) epsi -= M_PI;
+          //if (epsi < -M_PI/2) epsi += M_PI;
+          std::cout << "epsi = " << epsi << std::endl;
+          state << 0.0, 0.0, 0.0, v, cte, epsi;
+          
+          vector<double> solution = mpc.Solve(state, coeffs);
+
+          std::cout << "solution: " << std::endl;
+          for (int i = 0; i < solution.size(); i++) {
+            std::cout << solution[i] << std::endl;
+          }
+
+          double steer_value = solution[6]*(-1.0)/deg2rad(25);
+          double throttle_value = solution[7];
+
+          std::cout << "speed = " << v << std::endl;
+          std::cout << "steer_value = " << steer_value << std::endl;
+          std::cout << "throttle_value = " << throttle_value << std::endl;
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -110,6 +171,7 @@ int main() {
           //Display the MPC predicted trajectory 
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
+          mpc.getPredictedWaypoints(mpc_x_vals, mpc_y_vals);
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
@@ -118,8 +180,8 @@ int main() {
           msgJson["mpc_y"] = mpc_y_vals;
 
           //Display the waypoints/reference line
-          vector<double> next_x_vals;
-          vector<double> next_y_vals;
+          vector<double> next_x_vals = t_ptsx;
+          vector<double> next_y_vals = t_ptsy;
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
