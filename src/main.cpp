@@ -89,8 +89,8 @@ int main() {
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
-    std::cout << "------------------------------------------------------------------" << std::endl;
-    cout << sdata << endl;
+    //std::cout << "------------------------------------------------------------------" << std::endl;
+    //cout << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
       if (s != "") {
@@ -98,17 +98,17 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          std::cout << " t = " << t << std::endl;
+          //std::cout << " t = " << t << std::endl;
           t++;
 
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
           
-          std::cout << ptsx.size() << ", " << ptsy.size() << std::endl;
-
-          for (int i = 0; i < ptsx.size(); i++) {
-            std::cout << "(" << ptsx[i] << ", " << ptsy[i] << ") " << std::endl;
-          }
+          //std::cout << ptsx.size() << ", " << ptsy.size() << std::endl;
+          //
+          //for (int i = 0; i < ptsx.size(); i++) {
+          //  std::cout << "(" << ptsx[i] << ", " << ptsy[i] << ") " << std::endl;
+          //}
 
 
           double px = j[1]["x"];
@@ -125,10 +125,10 @@ int main() {
             ptsx_car[i] = t_ptsx[i];
             ptsy_car[i] = t_ptsy[i];
           }
-          std::cout << "Transformed: " << std::endl;
-          for (int i = 0; i < t_ptsx.size(); i++) {
-            std::cout << "(" << t_ptsx[i] << ", " << t_ptsy[i] << ") " << std::endl;
-          }
+          //std::cout << "Transformed: " << std::endl;
+          //for (int i = 0; i < t_ptsx.size(); i++) {
+          //  std::cout << "(" << t_ptsx[i] << ", " << t_ptsy[i] << ") " << std::endl;
+          //}
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
@@ -136,31 +136,29 @@ int main() {
           *
           */
           auto coeffs = polyfit(ptsx_car, ptsy_car, 3);
-          std::cout << "coeffs: " << coeffs << std::endl;
+          //std::cout << "coeffs: " << coeffs << std::endl;
 
           Eigen::VectorXd state(6);
           double cte = polyeval(coeffs, 0);
-          std::cout << "cte = " << cte << std::endl;
+          //std::cout << "cte = " << cte << std::endl;
 
           double epsi = atan(coeffs[1]); 
-          //if (epsi > M_PI/2) epsi -= M_PI;
-          //if (epsi < -M_PI/2) epsi += M_PI;
-          std::cout << "epsi = " << epsi << std::endl;
+          //std::cout << "epsi = " << epsi << std::endl;
           state << 0.0, 0.0, 0.0, v, cte, epsi;
           
           vector<double> solution = mpc.Solve(state, coeffs);
 
-          std::cout << "solution: " << std::endl;
-          for (int i = 0; i < solution.size(); i++) {
-            std::cout << solution[i] << std::endl;
-          }
+          //std::cout << "solution: " << std::endl;
+          //for (int i = 0; i < solution.size(); i++) {
+          //  std::cout << solution[i] << std::endl;
+          //}
 
           double steer_value = solution[6]*(-1.0)/deg2rad(25);
           double throttle_value = solution[7];
 
-          std::cout << "speed = " << v << std::endl;
-          std::cout << "steer_value = " << steer_value << std::endl;
-          std::cout << "throttle_value = " << throttle_value << std::endl;
+          //std::cout << "speed = " << v << std::endl;
+          //std::cout << "steer_value = " << steer_value << std::endl;
+          //std::cout << "throttle_value = " << throttle_value << std::endl;
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.

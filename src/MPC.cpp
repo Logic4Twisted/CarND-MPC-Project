@@ -153,7 +153,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // element vector and there are 10 timesteps. The number of variables is:
   //
   // 4 * 10 + 2 * 9
-  std::cout << "state.size = " << state.size() << std::endl;
 
   size_t n_vars = state.size()*N + 2*(N-1);
   // TODO: Set the number of constraints
@@ -166,7 +165,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   double cte = state[4];
   double epsi = state[5];
 
-  std::cout << "state = " << state << std::endl;
+  //std::cout << "state = " << state << std::endl;
 
   // Initial value of the independent variables.
   // SHOULD BE 0 besides initial state.
@@ -273,7 +272,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   // Cost
   auto cost = solution.obj_value;
-  std::cout << "Cost " << cost << std::endl;
+  //std::cout << "Cost " << cost << std::endl;
 
   x_predicted.resize(N);
   y_predicted.resize(N);
