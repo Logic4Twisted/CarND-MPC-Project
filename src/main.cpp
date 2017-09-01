@@ -100,8 +100,8 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          std::cout << " t = " << t << std::endl;
-          t++;
+          //std::cout << " t = " << t << std::endl;
+          //t++;
 
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
@@ -143,11 +143,11 @@ int main() {
 
           Eigen::VectorXd state(6);
           double cte = polyeval(coeffs, 0);
-          std::cout << "cte = " << cte << std::endl;
-          sum_cte += (cte*cte);
+          //std::cout << "cte = " << cte << std::endl;
+          //sum_cte += (cte*cte);
 
           double epsi = atan(coeffs[1]); 
-          std::cout << "epsi = " << epsi << std::endl;
+          //std::cout << "epsi = " << epsi << std::endl;
           state << 0.0, 0.0, 0.0, v, cte, epsi;
           
           vector<double> solution = mpc.Solve(state, coeffs);
@@ -161,8 +161,8 @@ int main() {
           double throttle_value = solution[7];
 
           //std::cout << "speed = " << v << std::endl;
-          std::cout << "steer_value = " << steer_value << std::endl;
-          std::cout << "throttle_value = " << throttle_value << std::endl;
+          //std::cout << "steer_value = " << steer_value << std::endl;
+          //std::cout << "throttle_value = " << throttle_value << std::endl;
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -191,14 +191,14 @@ int main() {
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
 
-          if (t == 250) {
-            std::cout << "avg cte = " << sum_cte/t << std::endl;
-            std::cout << "avg speed = " << sum_speed/t << std::endl;
-          }
+          //if (t == 250) {
+          //  std::cout << "avg cte = " << sum_cte/t << std::endl;
+          //  std::cout << "avg speed = " << sum_speed/t << std::endl;
+          //}
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          //std::cout << msg << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.

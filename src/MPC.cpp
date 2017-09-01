@@ -280,8 +280,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   x_predicted.resize(N);
   y_predicted.resize(N);
   for (int i = 0; i < N; i++) {
-    x_predicted[i] = solution.x[x_start + 1 + i];
-    y_predicted[i] = solution.x[y_start + 1 + i];
+    x_predicted[i] = solution.x[x_start + i];
+    y_predicted[i] = solution.x[y_start + i];
   }
 
   previous_delta = solution.x[delta_start+n_latency];
