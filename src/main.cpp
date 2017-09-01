@@ -82,8 +82,10 @@ int main() {
   // MPC is initialized here!
   MPC mpc = MPC(0.1);
   int t = 0;
+  double sum_cte = 0.0;
+  double sum_speed = 0.0;
 
-  h.onMessage([&mpc, &t](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&mpc, &t, &sum_cte, &sum_speed](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -98,7 +100,7 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          //std::cout << " t = " << t << std::endl;
+          std::cout << " t = " << t << std::endl;
           t++;
 
           vector<double> ptsx = j[1]["ptsx"];
@@ -115,6 +117,7 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          sum_speed += v;
 
           vector<double> t_ptsx, t_ptsy;
           toCarSpace(ptsx, ptsy, psi, px, py, t_ptsx, t_ptsy);
@@ -140,10 +143,11 @@ int main() {
 
           Eigen::VectorXd state(6);
           double cte = polyeval(coeffs, 0);
-          //std::cout << "cte = " << cte << std::endl;
+          std::cout << "cte = " << cte << std::endl;
+          sum_cte += (cte*cte);
 
           double epsi = atan(coeffs[1]); 
-          //std::cout << "epsi = " << epsi << std::endl;
+          std::cout << "epsi = " << epsi << std::endl;
           state << 0.0, 0.0, 0.0, v, cte, epsi;
           
           vector<double> solution = mpc.Solve(state, coeffs);
@@ -157,8 +161,8 @@ int main() {
           double throttle_value = solution[7];
 
           //std::cout << "speed = " << v << std::endl;
-          //std::cout << "steer_value = " << steer_value << std::endl;
-          //std::cout << "throttle_value = " << throttle_value << std::endl;
+          std::cout << "steer_value = " << steer_value << std::endl;
+          std::cout << "throttle_value = " << throttle_value << std::endl;
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -186,6 +190,11 @@ int main() {
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
+
+          if (t == 250) {
+            std::cout << "avg cte = " << sum_cte/t << std::endl;
+            std::cout << "avg speed = " << sum_speed/t << std::endl;
+          }
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";

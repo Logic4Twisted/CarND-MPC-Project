@@ -11,9 +11,12 @@ double dt = 0.05;
 
 double ref_v = 78.0;
 
-double cte_coeff = 1.2;
+double cte_coeff = 1.3;
 double epsi_coeff = 1.2;
-double v_coeff = 0.3;
+double v_coeff = 0.35;
+
+double delta_ceoff = 9.5;
+double delta_diff = 2.75;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -58,13 +61,13 @@ class FG_eval {
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += 10*vars[v_start]*CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += delta_ceoff*vars[v_start]*CppAD::pow(vars[delta_start + t], 2);
       fg[0] += CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += 2.5*vars[v_start]*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += delta_diff*vars[v_start]*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
       fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
